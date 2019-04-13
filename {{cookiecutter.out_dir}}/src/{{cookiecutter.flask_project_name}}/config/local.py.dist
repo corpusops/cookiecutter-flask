@@ -1,0 +1,20 @@
+#
+# Local postgis database with local user as the same name as the data base
+#
+
+# Nothing to define in the settings
+
+#
+# Database over a network interface
+#
+
+# POSTGRES_HOST = localhost
+# POSTGRES_DB = osm
+# POSTGRES_USER = osm
+# POSTGRES_PASSWORD = osm
+
+#
+# Internal projection SRID
+# Shoul be metric projection
+#
+SRID=2154 # France, Lambert 93

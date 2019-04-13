@@ -1,0 +1,38 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+coverage = "*"
+eradicate = "*"
+ipython = "*"
+isort = "*"
+pdb_clone = "*"
+pylama = "*"
+tblib = "*"
+xlrd = "*"
+pytest = "*"
+pytest-mock = "*"
+codecov = "*"
+py = ">=1.4.17,<2"
+
+[packages]
+flask = "*"
+flask-restplus = "*"
+isort = "*"
+mako = "*"
+psycopg2-binary = "*"
+pylama = "*"
+pyproj = "*"
+pytest = "*"
+recommonmark = "*"
+shapely = "*"
+sphinx = "*"
+gunicorn = {{'{'}}{%if cookiecutter.gunicorn_class not in ['gaiohttp', 'sync']%}extras = ["{{cookiecutter.gunicorn_class}}"], {% endif %}version = ">=19.8"}
+{% if cookiecutter.with_sentry %}
+raven = { extras = ["flask"], version = "=={{cookiecutter.raven_ver}}" }
+{% endif %}
+
+[requires]
+python_version = "{{cookiecutter.py_ver}}"
