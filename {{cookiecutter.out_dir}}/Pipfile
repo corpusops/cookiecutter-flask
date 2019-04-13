@@ -1,0 +1,32 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+tox = "*"
+coverage = "*"
+isort = "*"
+pylama = "*"
+tblib = "*"
+eradicate = "*"
+xlrd = "*"
+pdb_clone = "*"
+
+[packages]
+flask = "*"
+flask-restplus = "*"
+pytest = "*"
+psycopg2-binary = "*"
+pyproj = "*"
+shapely = "*"
+mako = "*"
+sphinx = "*"
+recommonmark = "*"
+pylama = "*"
+isort = "*"
+gunicorn = "*"
+raven = "{{cookiecutter.raven_ver}}"
+
+[requires]
+python_version = "{{cookiecutter.py_ver}}"
