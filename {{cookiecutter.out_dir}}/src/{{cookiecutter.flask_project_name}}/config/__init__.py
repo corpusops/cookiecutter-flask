@@ -17,6 +17,7 @@ DEFAULT_SETTINGS = {
     # Internal projection SRID
     # Shoul be metric projection
     'SRID': 2154,
+    'SECRET_KEY': 'supercret',
 }
 
 
@@ -42,6 +43,8 @@ def as_col(value, separators=None, final_type=None, **kw):
 
 def as_int(value, **kw):
     if value not in ['', None]:
+        if isinstance(value, six.string_types):
+            value = value.split()[0].strip()
         value = int(value)
     return value
 
@@ -73,7 +76,8 @@ for k, val in six.iteritems(DEFAULT_SETTINGS):
     }.get(typ, typ)
     globs.update({k: tfunc(os.environ.get(k, val))})
 
+
 try:
-    from .config_local import *  # noqa
+    from .local import *  # noqa
 except ImportError:
     pass

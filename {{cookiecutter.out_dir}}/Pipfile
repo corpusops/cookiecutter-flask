@@ -4,29 +4,34 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-tox = "*"
 coverage = "*"
+eradicate = "*"
+ipython = "*"
 isort = "*"
+pdb_clone = "*"
 pylama = "*"
 tblib = "*"
-eradicate = "*"
+tox = "*"
 xlrd = "*"
-pdb_clone = "*"
+tox-pipenv = "*"
+tox-venv = ">=0.4.0"
 
 [packages]
 flask = "*"
 flask-restplus = "*"
-pytest = "*"
-psycopg2-binary = "*"
-pyproj = "*"
-shapely = "*"
-mako = "*"
-sphinx = "*"
-recommonmark = "*"
-pylama = "*"
 isort = "*"
-gunicorn = "*"
-raven = "{{cookiecutter.raven_ver}}"
+mako = "*"
+psycopg2-binary = "*"
+pylama = "*"
+pyproj = "*"
+pytest = "*"
+recommonmark = "*"
+shapely = "*"
+sphinx = "*"
+gunicorn = {{'{'}}{%if cookiecutter.gunicorn_class not in ['gaiohttp', 'sync']%}extras = ["{{cookiecutter.gunicorn_class}}"], {% endif %}version = ">=19.8"}
+{% if cookiecutter.with_sentry %}
+raven = { extras = ["flask"], version = "=={{cookiecutter.raven_ver}}" }
+{% endif %}
 
 [requires]
 python_version = "{{cookiecutter.py_ver}}"

@@ -15,3 +15,6 @@ cops_{{cookiecutter.app_type}}_registries:
   password: "superpwd"
 # cops_{{cookiecutter.lname}}_sentry_dsn: ""
 # cops_{{cookiecutter.lname}}_mailcatcher_password: ""
+
+# </dev/urandom tr -dc 'A-Za-z0-9' | head -c 32; echo
+cops_{{cookiecutter.lname}}_secret_key: supersecret

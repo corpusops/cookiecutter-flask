@@ -35,7 +35,7 @@ vv cookiecutter --no-input -o "$out" -f "$u" \
 dvv rsync -aA \
     $(if [[ -n $DEBUG ]];then echo "-v";fi )\
     --include local/regen.sh \
-    --exclude "local/*" --exclude lib \
+    --exclude "local/*" --exclude libe \
     $( if [ -e ${out2}/.git ];then echo "--exclude .git";fi; ) \
     "$out/" "${out2}/"
 

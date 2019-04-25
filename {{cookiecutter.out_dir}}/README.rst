@@ -1,9 +1,11 @@
 {{cookiecutter.lname}}
 {{cookiecutter.lname|length * '=' }}
 
+.. contents::
+
 
 Initialise your development environment
-+++++++++++++++++++++++++++++++++++++++++
+***************************************
 
 All following commands must be run only once at project installation.
 
@@ -11,7 +13,7 @@ All following commands must be run only once at project installation.
 First clone
 -----------
 
-..code-block:: ssh
+.. code-block:: sh
 
     git clone --recursive {{cookiecutter.git_project_url}}
     {%-if cookiecutter.use_submodule_for_deploy_code%}git submodule init --recursive  # only the fist time
@@ -21,7 +23,7 @@ Install docker and docker compose
 ----------------------------------
 if you are under debian/ubuntu/mint/centos you can do the following:
 
-..code-block:: ssh
+.. code-block:: sh
 
     .ansible/scripts/download_corpusops.sh
     .ansible/scripts/setup_corpusops.sh
@@ -30,22 +32,23 @@ if you are under debian/ubuntu/mint/centos you can do the following:
 
 ... or follow official procedures for `docker <https://docs.docker.com/install/#releases>`_ and  `docker-compose <https://docs.docker.com/compose/install/>`_.
 
-
 Update corpusops
 ------------------
-You may have to update corpusops time to time with
+
+You may have to update corpusops time to time with:
 ￼
-..code-block:: ssh
+
+.. code-block:: sh
 
     ./control.sh up_corpusops
-￼
+
 Configuration
--------------
+----------------
 
 Use the wrapper to init configuration files from their ``.dist`` counterpart
 and adapt them to your needs.
 
-..code-block:: ssh
+.. code-block:: sh
 
     ./control.sh init
 
@@ -54,7 +57,7 @@ Login to the app docker registry
 
 You need to login to our docker registry to be able to use it:
 
-..code-block:: ssh
+.. code-block:: sh
 
     docker login {{cookiecutter.docker_registry}}  # use your gitlab user
 
@@ -72,7 +75,7 @@ Update submodules
 -----------------
 Never forget to grab and update regulary the project submodules:
 
-..code-block:: ssh
+.. code-block:: sh
 
     git pull
     {%-if cookiecutter.use_submodule_for_deploy_code%}git submodule init --recursive  # only the fist time
@@ -83,7 +86,7 @@ Control.sh helper
 You may use the stack entry point helper which has some neat helpers but feel
 free to use docker command if you know what your are doing.
 
-..code-block:: ssh
+.. code-block:: sh
 
     ./control.sh usage # Show all available commands
 
@@ -92,7 +95,7 @@ Start the stack
 
 After a last verification of the files, to run with docker, just type:
 
-..code-block:: ssh
+.. code-block:: sh
 
     # First time you download the app, or sometime to refresh the image
     ./control.sh pull # Call the docker compose pull command
@@ -101,57 +104,84 @@ After a last verification of the files, to run with docker, just type:
 Launch app as foreground
 -------------------------
 
-..code-block:: ssh
+.. code-block:: sh
 
     ./control.sh fg
 
 **⚠️ Remember ⚠️** to use **./control.sh up** to start the stack before.
 
-## Start a shell inside the {{cookiecutter.app_type}} container
+Start a shell inside the {{cookiecutter.app_type}} container
+------------------------------------------------------------------
 
 - for user shell
 
-    ..code-block:: ssh
+    .. code-block:: sh
 
         ./control.sh usershell
 
 - for root shell
 
-  ..code-block:: ssh
+  .. code-block:: sh
 
         ./control.sh shell
 
 **⚠️ Remember ⚠️** to use `./control.sh up` to start the stack before.
 
-## Rebuild/Refresh local docker image in dev
+Rebuild/Refresh local docker image in dev
+------------------------------------------------
 
-  ..code-block:: ssh
+  .. code-block:: sh
 
     control.sh buildimages
 
-## Running heavy session
+Running heavy session
+------------------------------------------------
+
 Like for installing and testing packages without burning them right now in requirements.<br/>
 You will need to add the network alias and maybe stop the flask worker
 
-    ..code-block:: ssh
+    .. code-block:: sh
 
         ./control.sh stop {{cookiecutter.app_type}}
         services_ports=1 ./control.sh usershell
-        ./manage.py runserserver 0.0.0.0:8000
+        flask run
 
 **⚠️ Remember ⚠️** to use `./control.sh up` to start the stack before.
 
-## Run tests
+Use flask tool (eg: run/shell/routes)
+*************************************
+Just as easy as
 
-..code-block:: ssh
+    .. code-block:: sh
+
+        ./control.sh flask $args
+
+**⚠️ Remember ⚠️** to use `./control.sh up` to start the stack before.
+
+Run tests
+************
+
+.. code-block:: sh
 
     ./control.sh tests
     # also consider: linting|coverage
 
 **⚠️ Remember ⚠️** to use **./control.sh up** to start the stack before.
 
+
+File permissions
+*****************
+If you get annoying file permissions problems on your host in development, you can use the following routine to (re)allow your host
+user to use files in your working directory
+
+
+.. code-block:: sh
+
+    ./control.sh open_perms_valve
+
+
 Docker volumes
-+++++++++++++++
+****************
 
 Your application extensivly use docker volumes. From times to times you may
 need to erase them (eg: burn the db to start from fresh)
@@ -161,12 +191,21 @@ need to erase them (eg: burn the db to start from fresh)
     docker volume ls  # hint: |grep \$app
     docker volume rm $id
 
+
+Refresh Pipenv.lock
+**********************
+
+.. code-block:: sh
+
+    ./control.sh usershell "pipenv lock && cat Pipfile.lock > Pipfile.lock.mounted"
+
+
 Doc for deployment on environments
-++++++++++++++++++++++++++++++++++++++
-- `See here`<./docs/README.md>_.
+**********************************
+- `See here <./docs/deploy.md>`_.
 
 FAQ
-+++
+****
 If you get troubles with the nginx docker env restarting all the time, try recreating it
 
 .. code-block:: sh

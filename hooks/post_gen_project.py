@@ -98,6 +98,12 @@ rm -rfv \
    src/{{cookiecutter.flask_project_name}}/settings/instances/{{i}}*
 {% endif %}
 {% endfor %}
+{% if not cookiecutter.with_requirements %}
+rm -f requirements*
+{% endif %}
+{% if not cookiecutter.with_pipenv %}
+rm -f Pipfile*
+{% endif %}
 if [ -e $dockerfile ] && [ ! -h $dockerfile ];then
 sed -i -re \
 	"s/PY_VER=.*/PY_VER={{cookiecutter.py_ver}}/g" \

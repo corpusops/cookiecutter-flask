@@ -21,7 +21,7 @@ if [[ -n $SHELL_DEBUG ]];then set -x;fi
 
 shopt -s extglob
 
-VENV=../venv
+VENV=venv
 APP={{cookiecutter.app_type}}
 APP_USER=${APP_USER:-${APP}}
 APP_CONTAINER=${APP_CONTAINER:-${APP}}
@@ -306,13 +306,20 @@ do_runserver() {
 
 do_run_server() { do_runserver $@; }
 
+
+# {{cookiecutter.app_type.upper()}} specific
+#  wrap flask commands inside container
+do_flask() {
+    do_usershell flask $@
+}
+
 #  tests [$tests]: run tests
 do_test() {
     local bargs=${@:-tests}
     stop_containers
     set -- vv do_shell \
-        "if [ -e ../.tox ];then chown {{cookiecutter.app_type}} ../.tox;fi
-        && gosu {{cookiecutter.app_type}} $VENV/bin/tox -c ../tox.ini -e $bargs"
+        "if [ -e .tox ];then chown {{cookiecutter.app_type}} .tox;fi
+        && gosu {{cookiecutter.app_type}} $VENV/bin/tox -c tox.ini -e $bargs"
     "$@"
 }
 
@@ -351,7 +358,7 @@ do_main() {
     local actions="up_corpusops|shell|usage|install_docker|setup_corpusops|open_perms_valve"
     actions="$actions|yamldump|stop|usershell|exec|userexec|dexec|duserexec|dcompose"
     actions="$actions|init|up|fg|pull|build|buildimages|down|rm|run"
-    actions_{{cookiecutter.app_type}}="runserver|tests|test|coverage|linting|python"
+    actions_{{cookiecutter.app_type}}="runserver|tests|test|coverage|linting|python|flask"
     actions="@($actions|$actions_{{cookiecutter.app_type}})"
     action=${1-}
     if [[ -n $@ ]];then shift;fi

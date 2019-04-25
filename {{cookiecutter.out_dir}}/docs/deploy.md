@@ -269,7 +269,7 @@ and adapt certainly one of ``cops_flask_docker_env_freeform``, ``cops_flask_dock
 ### by hand
 ```sh
 cd /srv/docker/{{cookiecutter.lname}}  # where your project folder is
-docker-compose -f "docker-compose.yml" -f docker-compose-prod.yml -p "mixity" $ARGS
+docker-compose -f "docker-compose.yml" -f docker-compose-prod.yml -p "{{cookiecutter.lname}}" $ARGS
 ```
 
 ### via control.sh

@@ -69,10 +69,11 @@
     "mysql_image": "corpusops/mysql",
     "redis_image": "corpusops/redis:4.0-alpine",
     "nginx_image": "corpusops/nginx:1.14-alpine",
+    "with_requirements": "y",
+    "with_pipenv": "y",
     "settings_use_x_forwarded_host": "y",
     "settings_secure_ssl_redirect": "y",
     "git_project_https_url": "{{cookiecutter.git_project_url.replace('ssh', 'https').replace('git@', '')}}",
-    "no_lib": "",
-    "no_private": "",
+    "gunicorn_class": "gevent",
     "raven_ver": "6.10.0"
 }
