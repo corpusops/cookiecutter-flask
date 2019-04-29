@@ -103,12 +103,10 @@ services:
   {%-endif%}
   backup:
     <<: [ *env ]
-    image: "{{cookiecutter.dbsmartbackup_image}} "
+    image: "{{cookiecutter.dbsmartbackup_image}}"
     volumes:
-      - backupdb-dumps:/srv/backups/
-      - backupdb-logs:/srv/backups/logs/
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - ./local/backup/setup/reconfigure.yml:/setup/reconfigure.yml:ro
+      - backupdb-dumps:/var/db_smart_backup/
+      - backupdb-logs:/var/db_smart_backup/logs/
 {% if db_tag == 'postgres' %}  setup-postgres:
     <<: [ *env ]
     image: "{{cookiecutter["{0}_image".format(cookiecutter.db_mode)]}}"

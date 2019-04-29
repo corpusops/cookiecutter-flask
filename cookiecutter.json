@@ -75,6 +75,6 @@
     "settings_secure_ssl_redirect": "y",
     "git_project_https_url": "{{cookiecutter.git_project_url.replace('ssh', 'https').replace('git@', '')}}",
     "gunicorn_class": "gevent",
-    "dbsmartbackup_image": "corpusops/dbsmartbackup:pg10",
+    "dbsmartbackup_image": "{% if cookiecutter.db_mode == 'postgis' %}{% set pref=cookiecutter.postgis_image.replace('postgis', 'postgres').split('-')[0]%}{% elif cookiecutter.db_mode == 'postgresql' %}{% set pref=cookiecutter.postgresql_image%}{% elif cookiecutter.db_mode == 'mysql' %}{% set pref=cookiecutter.mysql_image%}{% endif %}{{pref.replace(':', '::').replace('/', '/dbsmartbackup:').replace('::', '-')}}",
     "raven_ver": "6.10.0"
 }
