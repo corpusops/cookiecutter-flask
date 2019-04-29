@@ -55,7 +55,7 @@
     "with_sentry": "y",
     "docker_registry": "registry.{{cookiecutter.infra_domain}}",
     "registry_is_gitlab_registry": "{% if 'gitlab.com' in cookiecutter.docker_registry%}y{%endif%}",
-    "simple_docker_image": "{{cookiecutter.git_ns.split('/')[0].lower()}}/{{cookiecutter.lname}}",
+    "simple_docker_image": "{{cookiecutter.git_ns.split('/')[0].lower()}}/{{cookiecutter.lname.replace('-', '').replace('_', '')}}",
     "docker_image": "{%if cookiecutter.docker_registry%}{{cookiecutter.docker_registry}}/{%endif%}{{cookiecutter.simple_docker_image}}",
     "db_mode": "postgis",
     "tz": "Europe/Paris",
@@ -63,7 +63,7 @@
     "registry_password": "{%if cookiecutter.registry_is_gitlab_registry%}$CI_JOB_TOKEN{%endif%}",
     "statics_uri": "/static",
     "with_imposm": "",
-    "postgis_image": "corpusops/pgrouting:10.1-2.5.4",
+    "postgis_image": "corpusops/postgis:11-2.5",
     "postgresql_image": "corpusops/postgres:10",
     "postgres_image": "{{cookiecutter.postgresql_image}}",
     "mysql_image": "corpusops/mysql",
@@ -75,5 +75,6 @@
     "settings_secure_ssl_redirect": "y",
     "git_project_https_url": "{{cookiecutter.git_project_url.replace('ssh', 'https').replace('git@', '')}}",
     "gunicorn_class": "gevent",
+    "dbsmartbackup_image": "corpusops/dbsmartbackup:pg10",
     "raven_ver": "6.10.0"
 }

@@ -103,7 +103,7 @@ services:
   {%-endif%}
   backup:
     <<: [ *env ]
-    image: "corpusops/dbsmartbackup:pg10"
+    image: "{{cookiecutter.dbsmartbackup_image}} "
     volumes:
       - backupdb-dumps:/srv/backups/
       - backupdb-logs:/srv/backups/logs/
