@@ -65,6 +65,7 @@ You need to login to our docker registry to be able to use it:
 **⚠️ See also ⚠️** the
     `project docker registry`<{{cookiecutter.git_project_url.replace('ssh://', 'https://').replace('git@', '')}}/container_registry>_
 {%- else %}
+
 **⚠️ See also ⚠️** the makinacorpus doc in the docs/tools/dockerregistry section.
 {%- endif%}
 
@@ -109,6 +110,17 @@ Launch app as foreground
     ./control.sh fg
 
 **⚠️ Remember ⚠️** to use **./control.sh up** to start the stack before.
+
+
+Run plain docker-compose commands
+------------------------------------
+
+- Please remember that the ``CONTROL_COMPOSE_FILES`` env var controls which docker-compose configs are use (list of space separated files), by default it uses the dev set.
+
+    .. code-block:: sh
+
+        ./control.sh dcompose <ARGS>
+
 
 Start a shell inside the {{cookiecutter.app_type}} container
 ------------------------------------------------------------------
@@ -200,6 +212,168 @@ Refresh Pipenv.lock
 .. code-block:: sh
 
     ./control.sh usershell "pipenv lock && cat Pipfile.lock > Pipfile.lock.mounted"
+
+
+Reusing a precached image in dev to accelerate rebuilds
+*******************************************************
+Once you have build once your image, you have two options to reuse your image as a base to future builds, mainly to accelerate buildout successive runs.
+
+- Solution1: Use the current image as an incremental build: Put in your .env
+
+    .. code-block:: sh
+
+        FLASK_BASE_IMAGE=registry.makina-corpus.net/mirabell/chanel:latest-dev
+
+- Solution2: Use a specific tag: Put in your .env
+
+    .. code-block:: sh
+
+        FLASK_BASE_IMAGE=a tag
+        # this <a_tag> will be done after issuing: docker tag registry.makina-corpus.net/mirabell/chanel:latest-dev a_tag
+
+Integrating an IDE
+*******************
+- **DO NOT START YET YOUR IDE**
+- Add to your .env and re-run ``./control.sh build flask``
+
+    .. code-block:: sh
+
+        WITH VISUALCODE=1
+        #  or
+        WITH_PYCHARM=1
+        # note that you can also set the version to install (see .env.dist)
+
+- Start the stack, but specially stop the app container as you will
+  have to separatly launch it wired to your ide
+
+    .. code-block:: sh
+
+        ./control.sh up
+        ./control.sh down flask
+
+
+Get the completion and the code resolving for bundled dependencies wich are inside the container
+-------------------------------------------------------------------------------------------------
+
+- Whenever you rebuild the image, you need to refresh the files for your IDE to complete bundle dependencies
+
+    .. code-block:: sh
+
+        ./control.sh get_container_code
+
+Using pycharm
+-----------------
+- Only now launch pycharm and configure a project on this working directory
+- Whenever you open your pycharm project:
+    - Add local/code/venv/lib/python*/site-packages to sources if it is not already
+
+Make a break, insert a PDB and attach the session on Pycharm
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+- The docker container will connect to your running pycharm process, using a network tcp connection, eg on port ``12345``.
+- ``12345`` can be changed but of course adapt the commands, this port must be reachable from within the container.
+- Linux only: This iptables rule can be more restrictive if you know and you want to but as the following it will allow unfiltered connections on port ``12345``.
+
+    .. code-block:: sh
+
+        iptables -I INPUT  -p tcp -m tcp --dport 12345 -j ACCEPT
+
+- Ensure you added ``WITH_PYCHARM`` in your ``.env`` and that ``PYCHARM_VERSION`` is tied to your PYCHARM installation and start from a fresh build if it was not (pip will mess to update it correctly, sorry).
+- Wherever you have the need to break, insert in your code the following snippet:
+
+    .. code-block:: python
+
+        import pydevd_pycharm;pydevd_pycharm.settrace('host.docker.internal', port=12345, stdoutToServer=True, stderrToServer=True)
+
+    - if ``host.docker.internal`` does not work for you, you can replace it by the local IP of your machine.
+- Remember this rules to insert your breakpoint:  If the file reside on your host, you can directly insert it, but on the other side, you will need to run a usershell session and debug from there.
+  Eg: if  you want to put a pdb in ``six.py``
+
+    - DO NOT DO IT in ``local/code/**/six.py``
+
+        .. code-block:: sh
+
+            ./control.sh down flask
+            services_ports=1 ./control.sh usershell
+            apt install -y vim
+            vim **/six.py
+            # insert: import pydevd_pycharm;pydevd_pycharm.settrace('host.docker.internal', port=12345, stdoutToServer=True, stderrToServer=True)
+            python src/*/api.py
+
+    - With pycharm and your configured debugging session, attach to the session
+
+
+Using VSCode
+------------
+- You must launch VSCode using ``./control.sh vscode`` as vscode needs to have the ``PYTHONPATH`` variable preset to make linters work
+
+    .. code-block:: sh
+
+        ./control.sh vscode
+
+- In other words, this add ``local/**/site-packages`` to vscode sys.path.
+- Additionnaly, adding this to ``.vscode/settings.json`` would help to give you a smooth editing experience
+
+    .. code-block:: json
+
+        {
+          "files.watcherExclude": {
+              "**/.git/objects/**": true,
+              "**/.git/subtree-cache/**": true,
+              "**/node_modules/*/**": true,
+              "**/local/*/**": true,
+              "**/local/code/venv/lib/**/site-packages/**": false
+
+            }
+        }
+
+Debugging with VSCode
++++++++++++++++++++++
+- `vendor documentation link <https://code.visualstudio.com/docs/python/debugging#_remote-debugging>`_
+- The docker container will connect to your running VSCode process, using a network tcp connection, eg on port ``5678``.
+- ``5678`` can be changed but of course adapt the commands, this port must be reachable from within the container and in the ``docker-compose-dev.yml`` file.
+- Ensure you added ``WITH_VSCODE`` in your ``.env`` and that ``VSCODE_VERSION`` is tied to your VSCODE installation and start from a fresh build if it was not (pip will mess to update it correctly, sorry).
+- Wherever you have the need to break, insert in your code the following snippet after imports (and certainly before wherever you want your import):
+
+    .. code-block:: python
+
+        import ptvsd;ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True);ptvsd.wait_for_attach()
+
+- Remember this rules to insert your breakpoint:  If the file reside on your host, you can directly insert it, but on the other side, you will need to run a usershell session and debug from there.
+  Eg: if  you want to put a pdb in ``six.py``
+
+    - DO NOT DO IT in ``local/code/**/six.py``
+    - do:
+
+        .. code-block:: sh
+
+            ./control.sh down flask
+            services_ports=1 ./control.sh usershell
+            apt install -y vim
+            vim **/six.py
+            # insert: import ptvsd;ptvsd.enable_attach(address=('0.0.0.0', 5678), redirect_output=True);ptvsd.wait_for_attach()
+            python src/*/api.py
+
+- toggle a breakpoint on the left side of your text editor on VSCode.
+- Switch to Debug View in VS Code, select the Python: Attach configuration, and select the settings (gear) icon to open launch.json to that configuration.
+  Duplicate the remote attach part and edit it as the following
+
+    .. code-block:: json
+
+        {
+          "name": "Python Docker Attach",
+          "type": "python",
+          "request": "attach",
+          "pathMappings": [
+            {
+              "localRoot": "${workspaceFolder}",
+              "remoteRoot": "/code"
+            }
+          ],
+          "port": 5678,
+          "host": "localhost"
+        }
+
+- With VSCode and your configured debugging session, attach to the session and it should work
 
 
 Doc for deployment on environments

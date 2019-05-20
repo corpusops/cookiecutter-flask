@@ -6,7 +6,7 @@ from flask_restplus import Api, Resource
 
 
 module = os.environ.get(
-    'FLASK_SETTINGS_MODULE', '{{cookiecutter.lname}}.config')
+    'FLASK_SETTINGS_MODULE', '{{cookiecutter.lname}}.{{cookiecutter.flask_settings}}')
 app = Flask(__name__)
 app.config.from_object(module)
 api = Api(app)

@@ -28,6 +28,11 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     description="Python Boilerplate contains all the boilerplate you need to create a Python package.",
+    entry_points={
+        'console_scripts': [
+            '{{cookiecutter.lname}}={{cookiecutter.lname}}.cli:main',
+        ],
+    },
     install_requires=requirements,
     license="{{cookiecutter.project_license}}",
     long_description=readme + '\n\n' + history,

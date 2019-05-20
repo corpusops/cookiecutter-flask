@@ -9,19 +9,22 @@ x-images:
     image: "${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE}:${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE_VERSION}-dev"
     environment: &flask_env
       FLASK_WSGI: "${FLASK_WSGI:-{{cookiecutter.flask_project_name}}.wsgi}"
-      FLASK_WSGI: "${FLASK_WSGI:-{{cookiecutter.flask_project_name}}.wsgi}"
       FLASK_SETTINGS_MODULE: "${FLASK_SETTINGS_MODULE:-{{cookiecutter.flask_settings}}}"
-    depends_on:
-    - db
+{% if cookiecutter.redis_image or cookiecutter.db_mode %}    depends_on:{%endif%}
+{% if cookiecutter.redis_image  %}
     - redis
+{% endif%}
+{% if cookiecutter.db_mode  %}
+    - db
     - setup-{{db_tag}}
+{% endif %}
     working_dir: /code/src
     command:
     - /bin/sh
     - '-c'
     - >-
-      POSTGRES_STARTUP_TIMEOUT=$${POSTGRES_STARTUP_TIMEOUT:-45s}
-      && dockerize -wait http://setup-{{db_tag}} -timeout $${POSTGRES_STARTUP_TIMEOUT}
+      :
+      {%- if cookiecutter.db_mode  %} && POSTGRES_STARTUP_TIMEOUT=$${POSTGRES_STARTUP_TIMEOUT:-45s} && dockerize -wait http://setup-{{db_tag}} -timeout $${POSTGRES_STARTUP_TIMEOUT}{% endif %}
       && /init.sh
     volumes:
       {%- if not cookiecutter.remove_cron %}
@@ -52,17 +55,17 @@ services:
         && pw=$$(MH_AUTH_FILE="" MailHog bcrypt "$${MAILCATCHER_PASSWORD:-mailcatcher}")
         && echo "$${MAILCATCHER_USER:-mailcatcher}:$$pw" > $$MH_AUTH_FILE
         && su mailhog -p -c MailHog
-  redis:
+{% if cookiecutter.redis_image %}  redis:
     <<: [ *env ]
     image: "{{cookiecutter.redis_image}}"
     hostname: redis
     volumes:
-      - 'redis:/data'
-  db:
+      - 'redis:/data'{%endif%}
+{% if cookiecutter.db_mode %}  db:
     <<: [ *env ]
     image: "{{cookiecutter["{0}_image".format(cookiecutter.db_mode)]}}"
     volumes:
-      - postgresql:/var/lib/postgresql/data
+      - postgresql:/var/lib/postgresql/data{%endif%}
   nginx:
     <<: [ *env ]
     image: "{{cookiecutter.nginx_image}}"
@@ -101,7 +104,7 @@ services:
     depends_on:
     - {{cookiecutter.app_type}}
   {%-endif%}
-  backup:
+{% if cookiecutter.db_mode  %}  backup:
     <<: [ *env ]
     image: "{{cookiecutter.dbsmartbackup_image}}"
     volumes:
@@ -110,8 +113,10 @@ services:
 {% if db_tag == 'postgres' %}  setup-postgres:
     <<: [ *env ]
     image: "{{cookiecutter["{0}_image".format(cookiecutter.db_mode)]}}"
+{% if cookiecutter.db_mode  %}
     depends_on:
     - db
+{% endif %}
     entrypoint:
     - /bin/sh
     - '-c'
@@ -129,12 +134,14 @@ services:
       set -x \
       && dockerize -wait file://$$flag -timeout $${POSTGRES_STARTUP_TIMEOUT} \
       && while true;do printf "HTTP/1.1 200 OK\n\nstarted"| ( nc -l -p 80 || /bin/true);done
-{% endif %}
+{% endif %}{% endif %}
 volumes:
-  backupdb-logs:
+{% if cookiecutter.db_mode  %}  backupdb-logs:
   backupdb-dumps:
   postgresql:
-  redis:
+{% endif%}
+{%- if cookiecutter.redis_image %}  redis:
+{%endif%}
   nginx-certs:
   logs:
   mails:
