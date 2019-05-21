@@ -16,8 +16,15 @@ First clone
 .. code-block:: sh
 
     git clone --recursive {{cookiecutter.git_project_url}}
-    {%-if cookiecutter.use_submodule_for_deploy_code%}git submodule init --recursive  # only the fist time
-    git submodule upate{%endif%}
+    {%if cookiecutter.use_submodule_for_deploy_code-%}git submodule init # only the fist time
+    git submodule update --recursive{%endif%}
+
+
+Before using any ansible command: a note on sudo
+---------------------------------------------------
+If your user is ``sudoer`` but is asking for you to input a password before elavating privileges,
+you will need to add ``--ask-sudo-pass`` and maybe ``--become`` to any of the following ``ansible alike`` commands.
+
 
 Install docker and docker compose
 ----------------------------------
@@ -78,9 +85,10 @@ Never forget to grab and update regulary the project submodules:
 
 .. code-block:: sh
 
-    git pull
-    {%-if cookiecutter.use_submodule_for_deploy_code%}git submodule init --recursive  # only the fist time
-    git submodule upate{%endif%}
+    git pull{% if cookiecutter.use_submodule_for_deploy_code
+    %}
+    git submodule init # only the fist time
+    git submodule update --recursive{%endif%}
 
 Control.sh helper
 -------------------
