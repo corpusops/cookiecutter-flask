@@ -15,3 +15,4 @@ cops_{{cookiecutter.app_type}}_docker_env_extra: |-
   {% if 'post' in cookiecutter.db_mode %}POSTGRES_STARTUP_TIMEOUT={{'{{'}}cops_{{cookiecutter.app_type}}_postgres_startup_timeout}}{% endif %}
 cops_flask_http_protect_user: "root"
 cops_flask_http_protect_password: "rootroot"
+cops_flask_settings_module_name: "{{cookiecutter.flask_settings_name}}"
