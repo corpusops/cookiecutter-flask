@@ -4,7 +4,6 @@ import psycopg2
 from flask import Flask, abort, request
 from flask_restplus import Api, Resource
 
-
 module = os.environ.get(
     'FLASK_SETTINGS_MODULE', '{{cookiecutter.lname}}.{{cookiecutter.flask_settings}}')
 app = Flask(__name__)

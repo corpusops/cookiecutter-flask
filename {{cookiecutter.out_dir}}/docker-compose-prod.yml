@@ -4,10 +4,10 @@ x-{{cookiecutter.app_type}}: &{{cookiecutter.app_type}}
   - ./local.py:/code/src/{{cookiecutter.flask_settings.replace('.', '/')}}/local.py
   image: "${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE}:${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE_VERSION}"
 services:
-  nginx:
+{% if cookiecutter.with_nginx %}  nginx:
     restart: unless-stopped
     ports:
-    - 80:80
+    - 80:80{%endif%}
   {{cookiecutter.app_type}}:
     restart: unless-stopped
     <<: [ *{{cookiecutter.app_type}} ]
@@ -18,8 +18,8 @@ services:
     <<: [ *{{cookiecutter.app_type}} ]
     restart: unless-stopped
   {%- endif%}
-  mailcatcher:
-    restart: unless-stopped
+{%- if cookiecutter.with_mailcatcher%}  mailcatcher:
+    restart: unless-stopped{%endif%}
 {% if cookiecutter.redis_image %}  redis:
     restart: unless-stopped{%endif%}
 {% if cookiecutter.db_mode  %}  db:

@@ -48,7 +48,7 @@ x-images:
       - ./requirements-dev.txt:/code/requirements-dev.txt
       {% endif %}
 services:
-  {{nginxc}}nginx:
+  {% if cookiecutter.with_nginx %}{{nginxc}}nginx:
 {% if nginxc -%}
     <<: [ *bypass ]
     # uncomment to activate in dev
@@ -58,7 +58,7 @@ services:
   {{nginxc}}  {% if not nginxc%}{{nginxsslc}}{%endif %}- 443:443
   {{nginxc}}  environment: {NO_SSL: "0"}
   {% if cookiecutter.db_mode  %}backup: {<<: [ *bypass ]}
-  {%endif%}{{cookiecutter.app_type}}:
+  {%endif%}{% endif%}{{cookiecutter.app_type}}:
     <<: [ *flask ]
     environment:
       <<: [ *flask_env ]

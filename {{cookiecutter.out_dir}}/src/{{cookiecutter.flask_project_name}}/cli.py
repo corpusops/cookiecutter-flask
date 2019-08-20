@@ -3,6 +3,7 @@
 
 """Console script for the {{cookiecutter.lname}} api."""
 import sys
+
 import click
 
 from {{cookiecutter.lname}}.api import app

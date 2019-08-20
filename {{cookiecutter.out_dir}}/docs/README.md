@@ -194,11 +194,11 @@ The high level infrastructure:
     ```
     LXC---DOCKER
             |
-            +--- nginx: main reverse proxy
+{%- if cookiecutter.with_nginx%}            +--- nginx: main reverse prox{%endif %}
             |
             +--- {{cookiecutter.app_type}}: app
-            |            (share a special 'static' & medias volume
-            |             nginx which serve the application statis & medias)
+{%- if cookiecutter.with_nginx%}            |            (share a special 'static' & medias volume
+            |             nginx which serve the application statis & medias){%endif %}
             |
             +--- pgsql
             |

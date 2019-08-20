@@ -10,11 +10,9 @@ from {{cookiecutter.lname}} import api
 
 
 @pytest.fixture(scope="module")
-def dbconn():
-    api.app.config['DATABASE_CONN'].close()
+def istesting():
     api.app.config['TESTING'] = True
-    api.app.config['DATABASE_CONN'] = api.dbconn()
-    yield api.app.config['DATABASE_CONN']
+    yield api.app.config['TESTING']
     # write here, after yield, any tearDown code
 
 
@@ -22,7 +20,13 @@ def dbconn():
 class TestTropolink_api(unittest.TestCase):
     """Tests for `tropolink_api` package."""
 
+    def setUp(self):
+        """Set up test fixtures, if any."""
+
+    def tearDown(self):
+        """Tear down test fixtures, if any."""
+
     def test_000_something(self):
         """Test something."""
-        assert 1 == 2
+        assert 1 == 1
 # vim:set et sts=4 ts=4 tw=80:

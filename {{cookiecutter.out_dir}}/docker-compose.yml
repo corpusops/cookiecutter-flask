@@ -33,7 +33,7 @@ x-images:
       - ./src/{{cookiecutter.flask_settings.replace('.', '/')}}/instances:/code/src/{{cookiecutter.flask_settings.replace('.', '/')}}/instances
       - logs:/logs/
 services:
-  mailcatcher:
+{% if cookiecutter.with_mailcatcher%}  mailcatcher:
     <<: [ *env ]
     image: corpusops/mailhog
     hostname: mailcatcher
@@ -54,7 +54,7 @@ services:
         chown mailhog /mails
         && pw=$$(MH_AUTH_FILE="" MailHog bcrypt "$${MAILCATCHER_PASSWORD:-mailcatcher}")
         && echo "$${MAILCATCHER_USER:-mailcatcher}:$$pw" > $$MH_AUTH_FILE
-        && su mailhog -p -c MailHog
+        && su mailhog -p -c MailHog{%endif%}
 {% if cookiecutter.redis_image %}  redis:
     <<: [ *env ]
     image: "{{cookiecutter.redis_image}}"
@@ -66,7 +66,7 @@ services:
     image: "{{cookiecutter["{0}_image".format(cookiecutter.db_mode)]}}"
     volumes:
       - postgresql:/var/lib/postgresql/data{%endif%}
-  nginx:
+{%- if cookiecutter.with_nginx %}  nginx:
     <<: [ *env ]
     image: "{{cookiecutter.nginx_image}}"
     depends_on:
@@ -92,7 +92,7 @@ services:
         frep $${v}.template:$${v} --overwrite
         exec /bin/supervisord.sh
     environment:
-    - SUPERVISORD_CONFIGS=/etc/supervisor.d/cron /etc/supervisor.d/nginx /etc/supervisor.d/rsyslog
+    - SUPERVISORD_CONFIGS=/etc/supervisor.d/cron /etc/supervisor.d/nginx /etc/supervisor.d/rsyslog{%endif%}
   {{cookiecutter.app_type}}:
     <<: [ *{{cookiecutter.app_type}} ]
   {%- if not cookiecutter.remove_cron %}
@@ -142,6 +142,7 @@ volumes:
 {% endif%}
 {%- if cookiecutter.redis_image %}  redis:
 {%endif%}
-  nginx-certs:
+{%- if cookiecutter.with_nginx%}  nginx-certs:
+{%endif%}
   logs:
-  mails:
+{%- if cookiecutter.with_mailcatcher%}  mails:{%endif%}

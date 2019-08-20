@@ -390,11 +390,13 @@ Doc for deployment on environments
 
 FAQ
 ****
+{% if cookiecutter.with_nginx %}
 If you get troubles with the nginx docker env restarting all the time, try recreating it
 
 .. code-block:: sh
 
     docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d --no-deps --force-recreate nginx backup
+{% endif %}
 
 If you get the same problem with the flask docker env
 

@@ -118,6 +118,14 @@ sed -i -re \
 	sys/*sh
 fi
 set +x
+{% if not cookiecutter.with_nginx %}
+rm -rf sys/etc/nginx
+{% endif %}
+{% if not cookiecutter.with_deploy %}
+rm -rf .ansible/filter_plugins \
+       .ansible/inventory \
+       .ansible/playbooks
+{% endif %}
 {% if not cookiecutter.use_submodule_for_deploy_code %}
 
 while read f;do
