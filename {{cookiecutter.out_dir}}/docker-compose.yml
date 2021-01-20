@@ -13,6 +13,15 @@ x-images:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-password}"
       PGPASSWD: "${POSTGRES_PASSWORD:-password}"
       PGPASSWORD: "${POSTGRES_PASSWORD:-password}"
+      # Variable used for mail testing
+      MAILCATCHER_USER: "${MAILCATCHER_USER:-mailcatcher}"
+      # This need to be changed in production to something more secured !
+      # </dev/urandom tr -dc 'A-Za-z0-9' | head -c 32; echo;
+      MAILCATCHER_PASSWORD: "${MAILCATCHER_PASSWORD:-mailcatcher}"
+      # If you use sentry, set the SENTRY return url below
+      SENTRY_DSN: "${SENTRY_DSN}"
+      SENTRY_RELEASE: "${SENTRY_RELEASE-}"
+      SENTRY_ENVIRONMENT: "${SENTRY_ENVIRONMENT:-dev}"
       {% elif 'mysql' in cookiecutter.db_mode %}
       MYSQL_HOST: "${MYSQL_HOST:-db}"
       MYSQL_PORT: "${MYSQL_PORT:-3306}"
@@ -33,6 +42,9 @@ x-images:
     image: "${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE}:${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE_VERSION}-dev"
     environment: &flask_env
       <<: [ *env_vars ]
+      # Set this to a 32 random string
+      # </dev/urandom tr -dc 'A-Za-z0-9' | head -c 32; echo;
+      SECRET_KEY: "${SECRET_KEY:-SuperSecret}"
       FLASK_NAME: "${FLASK_NAME:-{{cookiecutter.lname}}}"
       APP_TYPE: "${APP_TYPE:-flask}"
       PROJECT_DIR: "${PROJECT_DIR:-/code/src/{{cookiecutter.lname}}/}"
@@ -55,6 +67,8 @@ x-images:
     - db
     - setup-{{db_tag}}
 {% endif %}
+      # France, Lambert 93
+      SRID: "${SRID:-2154}"
     working_dir: /code/src
     command:
     - /bin/sh
