@@ -92,6 +92,7 @@ services:
     hostname: mailcatcher
     volumes: ["mails:/mails"]
     environment:
+      <<: [ *env_vars ]
       MH_STORAGE: maildir
       MH_MAILDIR_PATH: /mails
       MH_SMTP_BIND_ADDR: 0.0.0.0:1025
@@ -152,7 +153,8 @@ services:
         frep $${v}.template:$${v} --overwrite
         exec /bin/supervisord.sh
     environment:
-    - SUPERVISORD_CONFIGS=/etc/supervisor.d/cron /etc/supervisor.d/nginx /etc/supervisor.d/rsyslog{%endif%}
+      <<: [ *env_vars ]
+      SUPERVISORD_CONFIGS: cron nginx rsyslog{%endif%}
   {{cookiecutter.app_type}}:
     <<: [ *{{cookiecutter.app_type}} ]
   {%- if not cookiecutter.remove_cron %}
