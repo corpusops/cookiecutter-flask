@@ -274,14 +274,6 @@ Using pycharm
         - On project python interpreter settings page, set:
             - Path Mapping: Add with browsing your local:`src` , remote: `/code/src`
             - (you should then see `<Project root>/src→/code/src`)
-    - on language/frameworks → django
-        - enable django support
-        - set project root to `src` folder
-        - set manage script to `manage.py`
-        - browse to your `dev.py` settings file
-    - Add a debug configuration
-        - host: `0.0.0.0`
-
 
 Using VSCode
 ------------
