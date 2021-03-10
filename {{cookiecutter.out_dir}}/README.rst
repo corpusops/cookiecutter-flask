@@ -265,12 +265,12 @@ Using pycharm
 - Tips and tricks to know:
     - the python interpreter (or wrapper in our case) the pycharm glue needs should be named `python.*`
     - Paths mappings are needed, unless pycharm will execute in its own folder under `/opt` totally messing the setup
-    - you should have the latest (2021-01-19) code of the common glue (`local/django-deploy-common`) for this to work
+    - you should have the latest (2021-01-19) code of the common glue (`local/flask-deploy-common`) for this to work
 - Goto settings (CTRL-ALT-S)
     - Create a `docker-compose` python interpreter:
         - compose files: `docker-compose.yml`, `docker-compose-dev.yml`
         - python interpreter: `/code/sys/python-pycharm`
-        - service: `django`
+        - service: `flask`
         - On project python interpreter settings page, set:
             - Path Mapping: Add with browsing your local:`src` , remote: `/code/src`
             - (you should then see `<Project root>/src→/code/src`)
