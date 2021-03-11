@@ -241,16 +241,6 @@ Once you have build once your image, you have two options to reuse your image as
 
 Integrating an IDE
 *******************
-- **DO NOT START YET YOUR IDE**
-- Add to your .env and re-run ``./control.sh build flask``
-
-    .. code-block:: sh
-
-        WITH VISUALCODE=1
-        #  or
-        WITH_PYCHARM=1
-        # note that you can also set the version to install (see .env.dist)
-
 - Start the stack, but specially stop the app container as you will
   have to separatly launch it wired to your ide
 
@@ -258,7 +248,6 @@ Integrating an IDE
 
         ./control.sh up
         ./control.sh down flask
-
 
 Using pycharm
 -----------------
@@ -274,9 +263,17 @@ Using pycharm
         - On project python interpreter settings page, set:
             - Path Mapping: Add with browsing your local:`src` , remote: `/code/src`
             - (you should then see `<Project root>/src→/code/src`)
+            - `!` It's normal to see no packages in the list and a warning for no packaging tools`!`
 
 Using VSCode
 ------------
+- **DO NOT START YET YOUR IDE**
+- Add to your .env and re-run ``./control.sh build flask``
+
+    .. code-block:: sh
+
+        WITH VISUALCODE=1
+ 
 - Whenever you rebuild the image, you need to refresh the files for your IDE to complete bundle dependencies
 
     .. code-block:: sh
@@ -306,7 +303,6 @@ Using VSCode
         }
 
 Debugging with VSCode
-+++++++++++++++++++++
 - `vendor documentation link <https://code.visualstudio.com/docs/python/debugging#_remote-debugging>`_
 - The VSCode process will connect to your running docker container, using a network tcp connection, eg on port ``5678``.
 - ``5678`` can be changed but of course adapt the commands, this port must be reachable from within the container and in the ``docker-compose-dev.yml`` file.

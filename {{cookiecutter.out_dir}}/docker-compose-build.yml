@@ -6,10 +6,8 @@ x-images:
       args:
         PY_VER: "${FLASK_PY_VER:-{{cookiecutter.py_ver}}}"
         WITH_IMPOSM: "${FLASK_WITH_IMPOSM:-{{cookiecutter.with_imposm}}}"
-        PYCHARM_VERSION: "${PYCHARM_VERSION-}"
         VSCODE_VERSION: "${VSCODE_VERSION-}"
         WITH_VSCODE: "${WITH_VSCODE:-0}"
-        WITH_PYCHARM: "${WITH_PYCHARM:-0}"
         BASE: "${FLASK_BASE_IMAGE:-{{cookiecutter.base_image}}}"
 
 services:
