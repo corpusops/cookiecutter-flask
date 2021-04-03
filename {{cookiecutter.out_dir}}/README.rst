@@ -219,7 +219,7 @@ Refresh Pipenv.lock
 
 .. code-block:: sh
 
-    ./control.sh usershell "pipenv lock && cat Pipfile.lock > Pipfile.lock.mounted"
+    ./control.sh usershell "cd requirements && pipenv lock"
 
 
 Reusing a precached image in dev to accelerate rebuilds

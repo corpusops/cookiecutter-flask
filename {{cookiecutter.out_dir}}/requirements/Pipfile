@@ -34,7 +34,16 @@ recommonmark = "*"
 shapely = "*"
 sphinx = "*"
 gunicorn = {{'{'}}{%if cookiecutter.gunicorn_class not in ['gaiohttp', 'sync']%}extras = ["{{cookiecutter.gunicorn_class}}"], {% endif %}version = ">=19.8"}
+
+
+{% if cookiecutter.with_celery %}
+# celery
+celery = {version = ">={{cookiecutter.celery_version}}"}
+flower = {version = ">={{cookiecutter.flower_version}}"}
+{% endif %}
+
 {% if cookiecutter.with_sentry %}
+# sentry
 raven = { extras = ["flask"], version = "=={{cookiecutter.raven_ver}}" }
 {% endif %}
 
