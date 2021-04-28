@@ -108,6 +108,7 @@ if [ -e $dockerfile ] && [ ! -h $dockerfile ];then
 sed -i -re \
 	"s/PY_VER=.*/PY_VER={{cookiecutter.py_ver}}/g" \
 	$dockerfile
+
 sed -i -re \
 	"s/project/{{cookiecutter.flask_project_name}}/g" \
 	$dockerfile
@@ -142,7 +143,13 @@ done < <( find -type f|egrep -v "((^./(\.tox|\.git|local))|/static/)"; )
 sed -i -re "/\/code\/sys\/\* sys/d" $dockerfile
 {% endif %}
 set -x
-        """
+{% if not cookiecutter.with_celery %}
+find src -name celery.py -delete
+{% endif %}
+# strip whitespaces from compose
+sed -i -re 's/\s+$//g' docker-compose*.yml
+sed -i -r '/^\s*$/d' docker-compose*.yml
+"""
 
 MOTD = '''
 After reviewing all changes
@@ -204,4 +211,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-# vim:set et sts=4 ts=4 tw=80:
+# vim:set et sts=4 ts=4 tw=0:

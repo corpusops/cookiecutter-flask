@@ -27,19 +27,25 @@ flask = "*"
 flask-restplus = "*"
 isort = "*"
 mako = "*"
-psycopg2-binary = "*"
 pylama = "*"
 pyproj = "*"
 recommonmark = "*"
 shapely = "*"
 sphinx = "*"
 gunicorn = {{'{'}}{%if cookiecutter.gunicorn_class not in ['gaiohttp', 'sync']%}extras = ["{{cookiecutter.gunicorn_class}}"], {% endif %}version = ">=19.8"}
+{% if cookiecutter.db_mode %}
+sqlalchemy = "*"
+psycopg2-binary = "*"
+{% endif %}
 
 
 {% if cookiecutter.with_celery %}
 # celery
 celery = {version = ">={{cookiecutter.celery_version}}"}
 flower = {version = ">={{cookiecutter.flower_version}}"}
+psutil = "*"
+prompt-toolkit = "*"
+tornado = "*"
 {% endif %}
 
 {% if cookiecutter.with_sentry %}

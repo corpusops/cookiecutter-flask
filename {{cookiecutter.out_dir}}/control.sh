@@ -33,6 +33,10 @@ BUILD_CONTAINERS="$APP_CONTAINER{%-if not cookiecutter.remove_cron%} cron{%endif
 EDITOR=${EDITOR:-vim}
 DIST_FILES_FOLDERS=". src/{{cookiecutter.lname}}*"
 CONTROL_COMPOSE_FILES="${CONTROL_COMPOSE_FILES:-docker-compose.yml docker-compose-dev.yml}"
+export DOCKER_BUILDKIT="${DOCKER_BUILDKIT-1}"
+export COMPOSE_DOCKER_CLI_BUILD="${COMPOSE_DOCKER_CLI_BUILD-1}"
+export BUILDKIT_PROGRESS="${BUILDKIT_PROGRESS-plain}"
+export BUILDKIT_INLINE_CACHE="${BUILDKIT_INLINE_CACHE-1}"
 COMPOSE_COMMAND=${COMPOSE_COMMAND:-docker-compose}
 ENV_FILES="${ENV_FILES:-.env docker.env}"
 FLAKE8_ARGS="${FLAKE8_ARGS-"--ignore=E402 --max-line-length=100"}"
@@ -46,7 +50,7 @@ source_envs() {
             while read vardef;do
                 var="$(echo "$vardef" | awk -F= '{print $1}')"
                 val="$(echo "$vardef" | awk '{gsub(/^[^=]+=/, "");print;}')"
-                if ( echo "$val" | egrep -q "'" )  || ! ( echo "$val" | egrep '"' ) ;then
+                if ( echo "$val" | egrep -q "'" )  || ! ( echo "$val" | egrep -q '"' ) ;then
                     eval "$var=\"$val\""
                 else
                     eval "$var='$val'"
@@ -192,6 +196,14 @@ do_pull() {
     vv $DC pull $@
 }
 
+
+#  ps [$args]: ps
+do_ps() {
+    local bargs=$@
+    set -- vv $DC ps
+    $@ $bargs
+}
+
 #  up [$args]: start stack
 do_up() {
     local bargs=$@
@@ -200,12 +212,6 @@ do_up() {
     $@ $bargs
 }
 
-#  down [$args]: down stack
-do_down() {
-    local bargs=$@
-    set -- vv $DC down
-    $@ $bargs
-}
 
 #  run [$args]: run stack
 do_run() {
@@ -218,6 +224,13 @@ do_run() {
 do_rm() {
     local bargs=$@
     set -- vv $DC rm
+    $@ $bargs
+}
+
+#  down [$args]: down stack
+do_down() {
+    local bargs=$@
+    set -- vv $DC down
     $@ $bargs
 }
 
@@ -243,7 +256,10 @@ do_fg() {
 do_build() {
     local bargs="$@" bp=""
     if [[ -n $BUILD_PARALLEL ]];then
-        bp="--parallel"
+        bp="${bp} --parallel"
+    fi
+    if [[ -n $BUILDKIT_INLINE_CACHE ]];then
+        bp="${bp} --build-arg BUILDKIT_INLINE_CACHE=\"${BUILDKIT_INLINE_CACHE}\""
     fi
     set -- vv $DCB build $bp
     if [[ -z "$bargs" ]];then
@@ -348,6 +364,31 @@ do_linting() {
     && isort -c -rc --quiet src"
 }
 
+{% if cookiecutter.with_celery -%}
+#  celery_beat_fg: launch celery app container in foreground (using entrypoint)
+do_celery_beat_fg() {
+    (   CONTAINER=celery-beat \
+        && stop_containers $CONTAINER \
+        && services_ports=1 do_usershell \
+        "celery -A \$FLASK_CELERY beat -l \$CELERY_LOGLEVEL $@" )
+}
+
+#  celery_worker_fg: launch celery beat container in foreground (using entrypoint)
+do_celery_worker_fg() {
+    (   CONTAINER=celery-worker \
+        && stop_containers celery-worker \
+        && services_ports=1 do_usershell \
+        "celery -A \$FLASK_CELERY worker -l \$CELERY_LOGLEVEL -B $@" )
+}
+
+#  celery_flower_fg: launch celery beat container in foreground (using entrypoint)
+do_celery_flower_fg() {
+    (   CONTAINER=celery-flower \
+        && stop_containers celery-flower \
+        && services_ports=1 do_usershell \
+        "flower -A \$FLASK_CELERY -l \$CELERY_LOGLEVEL $@" )
+}
+{% endif -%}
 #  coverage: run coverage tests
 do_coverage() {
     set_tests_command $@
@@ -428,7 +469,7 @@ do_main() {
     actions="$actions|yamldump|stop|usershell|exec|userexec|dexec|duserexec|dcompose"
 
     actions="$actions|init|up|fg|pull|build|buildimages|down|rm|run"
-    actions_{{cookiecutter.app_type}}="runserver|tests|test|coverage|linting|python|flask"
+    actions_{{cookiecutter.app_type}}="runserver|tests|test|coverage|linting|python|flask{% if cookiecutter.with_celery%}|celery_beat_fg|celery_worker_fg|celery_flower_fg{%endif%}"
     actions="@($actions|$actions_{{cookiecutter.app_type}})"
     action=${1-}
     source_envs

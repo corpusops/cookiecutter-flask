@@ -1,18 +1,15 @@
 version: '3.7'
 x-{{cookiecutter.app_type}}: &{{cookiecutter.app_type}}
-  volumes:
-  - ./local.py:/code/src/{{cookiecutter.flask_settings.replace('.', '/')}}/local.py
+  volumes: []
   image: "${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE}:${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE_VERSION}"
 services:
 {% if cookiecutter.with_nginx %}  nginx:
     restart: unless-stopped
-    ports:
-    - 80:80{%endif%}
   {{cookiecutter.app_type}}:
     restart: unless-stopped
     <<: [ *{{cookiecutter.app_type}} ]
     ports:
-    - "5000:5000"
+    - "${FLASK__API_LISTEN:-0.0.0.0}:${FLASK__API_PORT:-5000}:5000"
   {% if not cookiecutter.remove_cron %}
   cron:
     <<: [ *{{cookiecutter.app_type}} ]
@@ -28,4 +25,24 @@ services:
     restart: unless-stopped
 {% if cookiecutter.db_mode == 'postgres' %}  setup-postgres:
     restart: unless-stopped
-{% endif %}{% endif %}
+  backup:
+    restart: unless-stopped
+    volumes:
+      - backupdb-dumps:/var/db_smart_backup/
+      - backupdb-logs:/var/db_smart_backup/logs/{% endif %}
+{% endif %}{%endif%}
+{% if cookiecutter.with_celery %}  celery-broker:
+    restart: unless-stopped
+  celery-beat: &celery
+    <<: [ *{{cookiecutter.app_type}} ]
+    restart: unless-stopped
+  celery-worker:
+    <<: [ *{{cookiecutter.app_type}} ]
+    restart: unless-stopped
+  celery-flower:
+    <<: [ *{{cookiecutter.app_type}} ]
+    restart: unless-stopped
+{% endif -%}
+{% if cookiecutter.db_mode  %}  backupdb-logs:
+  backupdb-dumps:
+{% endif%}

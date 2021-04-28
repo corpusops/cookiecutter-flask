@@ -10,7 +10,7 @@ x-images:
         VSCODE_VERSION: "${VSCODE_VERSION-}"
         WITH_VSCODE: "${WITH_VSCODE:-0}"
         WITH_PYCHARM: "${WITH_PYCHARM:-0}"
-        BASE: "${FLASK_BASE_IMAGE:-corpusops/ubuntu-bare:bionic}"
+        BASE: "${FLASK_BASE_IMAGE:-{{cookiecutter.base_image}}}"
 
 services:
   {%- if not cookiecutter.remove_cron %}

@@ -1,15 +1,52 @@
 {%- set db_tag = 'post' in cookiecutter.db_mode and 'postgres' or cookiecutter.db_mode -%}
 version: '3.7'
 x-images:
-  env: &env {env_file: [.env, docker.env]}
+  env: &env
+    env_file: [.env, docker.env]
+    environment: &env_vars
+      {% if 'post' in cookiecutter.db_mode %}
+      POSTGRES_STARTUP_TIMEOUT: "${POSTGRES_STARTUP_TIMEOUT:-45s}"
+      POSTGRES_HOST: "${POSTGRES_HOST:-db}"
+      POSTGRES_PORT: "${POSTGRES_PORT:-5432}"
+      POSTGRES_DB: "${POSTGRES_DB:-db}"
+      POSTGRES_USER: "${POSTGRES_USER:-user}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-password}"
+      PGPASSWD: "${POSTGRES_PASSWORD:-password}"
+      PGPASSWORD: "${POSTGRES_PASSWORD:-password}"
+      {% elif 'mysql' in cookiecutter.db_mode %}
+      MYSQL_HOST: "${MYSQL_HOST:-db}"
+      MYSQL_PORT: "${MYSQL_PORT:-3306}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-db}"
+      MYSQL_USER: "${MYSQL_USER:-user}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-password}"
+      {% else %}
+      DB_HOST: "${DB_HOST:-db}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_NAME: "${DB_NAME;-db}"
+      DB_USER: "${DB_USER:-user}"
+      DB_PASSWORD: "${DB_PASSWORD:-password}"
+      {% endif %}
   {{cookiecutter.app_type}}: &{{cookiecutter.app_type}}
     <<: [ *env ]
     tty: true
     # latest image is only used in prod (without dev & test tools)
     image: "${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE}:${{'{'}}{{cookiecutter.app_type.upper()}}_IMAGE_VERSION}-dev"
     environment: &flask_env
+      <<: [ *env_vars ]
+      FLASK_NAME: "${FLASK_NAME:-{{cookiecutter.lname}}}"
+      APP_TYPE: "${APP_TYPE:-flask}"
+      PROJECT_DIR: "${PROJECT_DIR:-/code/src/{{cookiecutter.lname}}/}"
+      PROJECT_PACKAGE: "${PROJECT_PACKAGE:-{{cookiecutter.lname}}}"
+      GUNICORN_CLASS: "${GUNICORN_CLASS:-gevent}"
+      GUNICORN_EXTRA_ARGS: "${GUNICORN_EXTRA_ARGS:--t 600}"
+      FLASK_ENV: "${FLASK_ENV:-development}"
+      FLASK__DEPLOY_ENV: "${FLASK__DEPLOY_ENV:-dev}"
       FLASK_WSGI: "${FLASK_WSGI:-{{cookiecutter.flask_project_name}}.wsgi}"
       FLASK_SETTINGS_MODULE: "${FLASK_SETTINGS_MODULE:-{{cookiecutter.flask_settings}}}"
+{% if cookiecutter.with_celery %}      FLASK_CELERY: "${FLASK_CELERY:-{{cookiecutter.flask_project_name}}.celery:app}"
+      FLASK_CELERY_BROKER: "${FLASK_CELERY_BROKER:-{{cookiecutter.celery_broker}}}"
+      FLASK_CELERY_HOST: "${FLASK_CELERY_HOST:-celery-broker}"
+{% endif %}    depends_on:
 {% if cookiecutter.redis_image or cookiecutter.db_mode %}    depends_on:{%endif%}
 {% if cookiecutter.redis_image  %}
     - redis
@@ -21,15 +58,17 @@ x-images:
     working_dir: /code/src
     command:
     - /bin/sh
-    - '-c'
+    - '-ec'
     - >-
       :
       {%- if cookiecutter.db_mode  %} && POSTGRES_STARTUP_TIMEOUT=$${POSTGRES_STARTUP_TIMEOUT:-45s} && dockerize -wait http://setup-{{db_tag}} -timeout $${POSTGRES_STARTUP_TIMEOUT}{% endif %}
       && /init.sh
     volumes:
+      - ./data:/code/data
       {%- if not cookiecutter.remove_cron %}
       - ./sys/etc/cron.d:/code/sys/etc/cron.d/
       {%- endif %}
+      - ./local/localsettings:/code/src/{{cookiecutter.flask_settings.replace('.', '/')}}/tropolink/settingslocal
       - ./src/{{cookiecutter.flask_settings.replace('.', '/')}}/instances:/code/src/{{cookiecutter.flask_settings.replace('.', '/')}}/instances
       - logs:/logs/
 services:
@@ -69,6 +108,7 @@ services:
 {%- if cookiecutter.with_nginx %}  nginx:
     <<: [ *env ]
     image: "{{cookiecutter.nginx_image}}"
+    ports:
     depends_on:
       - {{cookiecutter.app_type}}
     volumes:
@@ -81,13 +121,19 @@ services:
       - |-
         export FLASK__HTTP_PROTECT_USER=$${FLASK__HTTP_PROTECT_USER:-root}
         export FLASK__HTTP_PROTECT_PASSWORD=$${FLASK__HTTP_PROTECT_PASSWORD-}
-        touch /etc/htpasswd-protect
-        chmod 644 /etc/htpasswd-protect
+        touch /etc/htpasswd-protect /etc/htpasswd-flower-protect
+        chmod 644 /etc/htpasswd*protect
         if [ "x$$FLASK__HTTP_PROTECT_PASSWORD" != "x" ];then
           echo "/ htpasswd:">&2
           echo "$$FLASK__HTTP_PROTECT_PASSWORD"\
           | htpasswd -bim /etc/htpasswd-protect "$$FLASK__HTTP_PROTECT_USER"
         fi
+        #{%if cookiecutter.with_celery %}
+        export FLOWER__HTTP_PROTECT_PASSWORD=$${FLOWER__HTTP_PROTECT_PASSWORD-secret123}
+        export FLOWER__HTTP_PROTECT_USER=$${FLOWER__HTTP_PROTECT_USER:-flower}
+        echo "$$FLOWER__HTTP_PROTECT_PASSWORD"\
+          | htpasswd -bim /etc/htpasswd-flower-protect "$$FLOWER__HTTP_PROTECT_USER"{%endif %}
+        #
         v=/etc/nginx/conf.d/default.conf
         frep $${v}.template:$${v} --overwrite
         exec /bin/supervisord.sh
@@ -104,12 +150,6 @@ services:
     depends_on:
     - {{cookiecutter.app_type}}
   {%-endif%}
-{% if cookiecutter.db_mode  %}  backup:
-    <<: [ *env ]
-    image: "{{cookiecutter.dbsmartbackup_image}}"
-    volumes:
-      - backupdb-dumps:/var/db_smart_backup/
-      - backupdb-logs:/var/db_smart_backup/logs/
 {% if db_tag == 'postgres' %}  setup-postgres:
     <<: [ *env ]
     image: "{{cookiecutter["{0}_image".format(cookiecutter.db_mode)]}}"
@@ -129,12 +169,40 @@ services:
       && ( while true;do if ( \
         echo "{% if 'gis' in cookiecutter.db_mode%}select 1 from spatial_ref_sys limit 1;select postgis_version();{%else%}select 1{%endif%}"\
         | psql -v ON_ERROR_STOP=1 \
-          "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@db/$$POSTGRES_DB"\
+          "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@$$POSTGRES_HOST:$$POSTGRES_PORT/$$POSTGRES_DB"\
       );then touch $$flag && break;fi;done )&
       set -x \
       && dockerize -wait file://$$flag -timeout $${POSTGRES_STARTUP_TIMEOUT} \
       && while true;do printf "HTTP/1.1 200 OK\n\nstarted"| ( nc -l -p 80 || /bin/true);done
-{% endif %}{% endif %}
+{% endif %}
+  backup:
+    <<: [ *env ]
+    image: "{{cookiecutter.dbsmartbackup_image}}"
+{% if cookiecutter.with_celery %}  celery-broker:
+    image: "{{cookiecutter['{0}_image'.format(cookiecutter.celery_broker)]}}"
+    environment:
+      <<: [ *flask_env ]
+    {% if cookiecutter.celery_broker in ['redis', 'rabbitmq'] -%}
+    volumes:
+    - celery{{cookiecutter.celery_broker}}:{% if cookiecutter.celery_broker in ['rabbitmq']%}/var/lib/{{cookiecutter.celery_broker}}{%else%}/data{%endif%}:rw
+    {%- endif %}
+  celery-beat: &celery
+    <<: [ *flask ]
+    environment:
+      <<: [ *flask_env ]
+      IMAGE_MODE: celery_beat
+    depends_on: [celery-broker]
+  celery-worker:
+    <<: [ *celery ]
+    environment:
+      <<: [ *flask_env ]
+      IMAGE_MODE: celery_worker
+  celery-flower:
+    <<: [ *celery ]
+    environment:
+      <<: [ *flask_env ]
+      IMAGE_MODE: celery_flower
+{% endif -%}
 volumes:
 {% if cookiecutter.db_mode  %}  backupdb-logs:
   backupdb-dumps:
@@ -146,3 +214,4 @@ volumes:
 {%endif%}
   logs:
 {%- if cookiecutter.with_mailcatcher%}  mails:{%endif%}
+{%if cookiecutter.with_celery%}  celery{{cookiecutter.celery_broker}}:{%endif%}

@@ -13,13 +13,27 @@ DEFAULT_SETTINGS = {
     # Database over a network interface
     'POSTGRES_HOST': 'localhost',
     'POSTGRES_PORT': 5432,
-    'POSTGRES_DB': 'osm',
-    'POSTGRES_USER': 'osm',
-    'POSTGRES_PASSWORD': 'osm',
+    'POSTGRES_DB': 'db',
+    'POSTGRES_USER': 'user',
+    'POSTGRES_PASSWORD': 'password',
     # Internal projection SRID
     # Shoul be metric projection
     'SRID': 2154,
     'SECRET_KEY': 'supercret',
+{% if cookiecutter.with_celery %}
+    # Celery settings
+    'CELERY_BROKER_URL': 'amqp://celery-broker//',
+{% if 'post' in cookiecutter.db_mode %}
+    'CELERY_RESULT_BACKEND': 'db+postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}',
+{% else %}
+    'CELERY_RESULT_BACKEND': 'rpc://',
+{% endif %}
+    'CELERY_RESULT_PERSISTENT': True,
+    #: Only add pickle to this list if your broker is secured
+    #: from unwanted access (see userguide/security.html)
+    'CELERY_ACCEPT_CONTENT': ['json'],
+    'CELERY_TASK_SERIALIZER': 'json',
+{% endif %}
 }
 
 
@@ -77,3 +91,19 @@ for k, val in six.iteritems(DEFAULT_SETTINGS):
         tuple: as_col,
     }.get(typ, typ)
     globs.update({k: tfunc(os.environ.get(k, val))})
+
+for i in [{%if cookiecutter.with_celery%}"CELERY_RESULT_BACKEND",{%endif%}]:
+    try:
+        globs[i] = globs[i].format(**globs)
+    except KeyError:
+        continue
+
+
+class Celery(object):
+    """Celery5 style compatible settings"""
+    broker_url = CELERY_BROKER_URL
+    result_backend = CELERY_RESULT_BACKEND
+    result_persistent = CELERY_RESULT_PERSISTENT
+    accept_content = CELERY_ACCEPT_CONTENT
+    task_serializer = CELERY_TASK_SERIALIZER
+

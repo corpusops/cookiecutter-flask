@@ -7,13 +7,14 @@ x-images:
     entrypoint: 'sh -c "while true;do echo notstarted;sleep 65000;done"'
     restart: "no"
   flask: &flask
+    stdin_open: true
     environment: &flask_env
        FLASK_SETTINGS_MODULE: "${FLASK_SETTINGS_MODULE:-{{cookiecutter.flask_settings}}.dev}"
        PIPENV_INSTALL_ARGS: "--dev --ignore-pipfile"
        NO_PIPENV_INSTALL: ""
     volumes: &flask_volumes
       {%-if cookiecutter.use_submodule_for_deploy_code %}
-      - ./{{cookiecutter.deploy_project_dir}}/sys/sudoer:/etc/sudoers.d/$APP_TYPE
+      - ./{{cookiecutter.deploy_project_dir}}/sys/sudoer:/etc/sudoers.d/${APP_TYPE:-flask}
       - ./{{cookiecutter.deploy_project_dir}}/sys/init.sh:/code/sys/init.sh
       - ./{{cookiecutter.deploy_project_dir}}/sys/init.sh:/code/init/init.sh
       - ./{{cookiecutter.deploy_project_dir}}/sys/etc/supervisor.d:/code/sys/etc/supervisor.d
@@ -39,14 +40,9 @@ x-images:
       - ./HISTORY.rst:/code/HISTORY.rst
       - ./setup.py:/code/setup.py
       - ./setup.cfg:/code/setup.cfg
-      {% if cookiecutter.with_pipenv %}
-      - ./Pipfile:/code/Pipfile
-      - ./Pipfile.lock:/code/Pipfile.lock.mounted
-      {% endif %}
-      {% if cookiecutter.with_requirements %}
-      - ./requirements.txt:/code/requirements.txt
-      - ./requirements-dev.txt:/code/requirements-dev.txt
-      {% endif %}
+      - ./requirements:/code/requirements
+
+
 services:
   {% if cookiecutter.with_nginx %}{{nginxc}}nginx:
 {% if nginxc -%}
@@ -54,21 +50,39 @@ services:
     # uncomment to activate in dev
 {%-endif%}
   {{nginxc}}  ports:
-  {{nginxc}}  - 80:80
-  {{nginxc}}  {% if not nginxc%}{{nginxsslc}}{%endif %}- 443:443
+  {{nginxc}}  - "${FLASK__HTTP_LISTEN:-0.0.0.0}:${FLASK__HTTP_PORT:-8080}:80"
+  {{nginxc}}  {% if not nginxc%}{{nginxsslc}}{%endif %}- "${FLASK__HTTPS_LISTEN:-0.0.0.0}:${FLASK__HTTPS_PORT:-443}:443"
   {{nginxc}}  environment: {NO_SSL: "0"}
   {% if cookiecutter.db_mode  %}backup: {<<: [ *bypass ]}
   {%endif%}{% endif%}{{cookiecutter.app_type}}:
     <<: [ *flask ]
+    ports:
+    - "${FLASK__API_LISTEN:-0.0.0.0}:${FLASK_DEBUG__PORT:-5678}:5678"
+    - "${FLASK__API_LISTEN:-0.0.0.0}:${FLASK_API__PORT:-5000}:5000"
     environment:
       <<: [ *flask_env ]
       IMAGE_MODE: fg
-    ports:
-      - "5678:5678"
-      - "5000:5000"
 {%- if not cookiecutter.remove_cron %}
   cron:
     <<: [ *{{cookiecutter.app_type}} ]
     environment:
       <<: [ *{{cookiecutter.app_type}}_env ]
 {% endif %}
+{% if cookiecutter.with_celery -%}
+  celery-beat: &celery
+    <<: [ *flask ]
+    environment:
+      <<: [ *flask_env ]
+      IMAGE_MODE: celery_beat
+  celery-worker:
+    <<: [ *celery ]
+    environment:
+      <<: [ *flask_env ]
+      IMAGE_MODE: celery_worker
+  celery-flower:
+    <<: [ *celery ]
+    environment:
+      <<: [ *flask_env ]
+      IMAGE_MODE: celery_flower
+{%- endif %}
+  backup: { <<: [ *bypass ] }

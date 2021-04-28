@@ -3,7 +3,7 @@
     "author": "foo",
     "author_email": "foo@foo.com",
     "project_license": "BSD license",
-    "py_ver": "3.7",
+    "py_ver": "3.9",
     "nginx_in_dev": "y",
     "ssl_in_dev": "y",
     "git_ns": "{{cookiecutter.name}}-group",
@@ -81,5 +81,11 @@
     "gunicorn_class": "gevent",
     "dbsmartbackup_image": "{% if cookiecutter.db_mode == 'postgis' %}{% set pref=cookiecutter.postgis_image.replace('postgis', 'postgres').split('-')[0]%}{% elif cookiecutter.db_mode == 'postgresql' %}{% set pref=cookiecutter.postgresql_image%}{% elif cookiecutter.db_mode == 'mysql' %}{% set pref=cookiecutter.mysql_image%}{% endif %}{{pref.replace(':', '::').replace('/', '/dbsmartbackup:').replace('::', '-')}}",
     "with_deploy": "y",
+    "base_image":  "corpusops/ubuntu-bare:focal",
+    "rabbitmq_image": "corpusops/rabbitmq:3",
+    "with_celery": "",
+    "flower_version": "0.9.5",
+    "celery_version": ">=4,<5",
+    "celery_broker": "rabbitmq",
     "raven_ver": "6.10.0"
 }

@@ -219,7 +219,7 @@ Refresh Pipenv.lock
 
 .. code-block:: sh
 
-    ./control.sh usershell "cd requirements && pipenv lock"
+    ./control.sh usershell sh -ec "cd requirements && pipenv lock"
 
 
 Reusing a precached image in dev to accelerate rebuilds
@@ -407,3 +407,24 @@ If you get the same problem with the flask docker env
     docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d db
     # wait fot postgis to be installed
     docker-compose -f docker-compose.yml -f docker-compose-dev.yml up flask
+
+{% if cookiecutter.with_celery %}
+Celery
+*******
+
+Celery can be used in foreground for easy developement<br/>
+Open two shell windows.<br/>
+
+In one of them, launch the beat
+```sh
+./control.sh celery_beat_fg
+```
+
+In the other, launch one worker
+```sh
+./control.sh celery_worker_fg
+```
+
+Access flower
+*************
+- http://site/flower  (default login: flower/secret123)

@@ -156,4 +156,13 @@ ENV/
 # mypy
 .mypy_cache/
 
+# Sqlite
+*.sqlite
+
+xrun*
 /data
+{% if cookiecutter.with_celery %}
+# celery
+celerybeat-schedule.db
+celerybeat.pid
+{% endif %}

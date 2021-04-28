@@ -19,6 +19,7 @@
 {{'{{'}} $v := merge $v ( dict "real_ip_from"                ( .Env.NGINX_REAL_IP_FROM | default "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16" )) }}
 {{'{{'}} $v := merge $v ( dict "ssl_ciphers"                 ( .Env.NGINX_SSL_CIPHERS | default $dciphers )                                 ) }}
 {{'{{'}} $v := merge $v ( dict "ssl_protocols"               ( .Env.NGINX_SSL_PROTOCOLS | default "TLSv1 TLSv1.1 TLSv1.2" )                 ) }}
+{{'{{'}} $v := merge $v ( dict "log_level"                   ( .Env.NGINX_LOGLEVEL | default "crit" )                 ) }}
 
 # optimize internal nginx buffers
 types_hash_max_size 2048;
@@ -81,7 +82,7 @@ server {
     server_name {{'{{'}} $v.server_name }}{{'{{'}}if $v.server_aliases }}{{'{{'}}$v.server_aliases}}{{'{{'}}end}};
     server_name_in_redirect {{'{{'}} $v.server_name_in_redirect }};
 
-    error_log  /logs/flask-error.log  crit;
+    error_log  /logs/flask-error.log  {{'{{'}}$v.log_level}};
     access_log /logs/flask-access.log custom_combined if=$method_loggable;
 
     {{'{{'}} define "vhost" }}
@@ -147,18 +148,30 @@ server {
     }
     {{'{{'}} if eq .noforcessl "1"}}# {{'{{'}} end }}if ($forwarded_ssl_scheme != "https"){ rewrite ^(.*)$ https://$host$1 permanent; }
 
+    {% if cookiecutter.with_celery %}
+    location /flower/ {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass http://celery-flower:5555;
+        auth_basic            "Restricted";
+        auth_basic_user_file  /etc/htpasswd-flower-protect;
+        add_header Pragma "no-cache";
+        add_header Cache-Control "private, max-age=0, no-cache, no-store";
+    }
+    {% endif %}
+
     location / {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $http_host;
         proxy_redirect off;
         proxy_pass http://flask:5000;
-
-        # Never cache the API content to prevent proxy caching
         add_header Pragma "no-cache";
         add_header Cache-Control "private, max-age=0, no-cache, no-store";
     }
 
     location ~ ^/mailcatcher/ {
+        auth_basic off;
         proxy_pass http://mailcatcher:8025;
     }
     {{'{{'}} end }}
@@ -181,7 +194,7 @@ server {
     ssl_session_timeout 10m;
     ssl_prefer_server_ciphers on;
     ssl_dhparam {{'{{'}} $v.diffie }};
-    error_log  /logs/ssl-flask-error.log  crit;
+    error_log  /logs/ssl-flask-error.log  {{'{{'}}$v.log_level}};
     access_log /logs/ssl-flask-access.log custom_combined if=$method_loggable;
     {{'{{'}} template "vhost" $v }}
 }
